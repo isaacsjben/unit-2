@@ -1,2 +1,40 @@
 /*Add CSS styles here*/
-#map {height: 600px;}
+.leaflet-popup-content p {
+    margin: 0.2em 0;
+    color: #ff7800;
+}
+
+#map {    
+    height: 900px;    
+    width: 71%;
+    display: inline-block;
+    }
+
+    #panel {  
+        width: 25%;  
+        padding: 20px;  
+        display: inline-block;  
+        vertical-align: top;  
+        text-align: center;  
+        line-height: 42px;  
+    }  
+    
+    .range-slider {  
+        width: 55%;  
+    }  
+    
+    .step {  
+        width: 20%;  
+    }  
+    
+    .step img {  
+        width: 50%;  
+    }  
+
+    #forward {
+        float: right;
+        }
+
+    #reverse {  
+        float: left;  
+    }
