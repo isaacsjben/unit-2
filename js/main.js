@@ -112,7 +112,7 @@ function createPropSymbols(data, attributes){
 //Resize proportional symbols according to new attribute values
 function updatePropSymbols(attribute){
     map.eachLayer(function(layer){
-        if (layer.feature && layer.feature.properties[attribute]){
+        if (layer.feature){
               //access feature properties
               var props = layer.feature.properties;
 
@@ -135,7 +135,7 @@ function updatePropSymbols(attribute){
 };
 
 //Create new sequence controls
-function createSequenceControls(){
+function createSequenceControls(attributes){
     //create range input element (slider)
     var slider = "<input class='range-slider' type='range'></input>";
     document.querySelector('#panel').insertAdjacentHTML('beforeend','<button class="step" id="reverse"/button>');
@@ -217,7 +217,7 @@ function getData(map){
             //calculate minimum data value
             minValue = calculateMinValue(json);
             createPropSymbols(json, attributes);
-            createSequenceControls();
+            createSequenceControls(attributes);
         });
 };
 
