@@ -48,18 +48,6 @@ function calcPropRadius(attValue) {
     return radius;
 };
 
-function onEachFeature(feature, layer) {
-    //no property named popupContent; instead, create html string with all properties
-    var popupContent = "";
-    if (feature.properties) {
-        //loop to add feature property names and values to html string
-        for (var property in feature.properties){
-            popupContent += "<p>" + property + ": " + feature.properties[property] + "</p>";
-        }
-        layer.bindPopup(popupContent);
-    };
-};
-
 //function to convert markers to circle markers
 function pointToLayer(feature, latlng, attributes){
     //Determine which attribute to visualize with proportional symbols
@@ -83,17 +71,9 @@ function pointToLayer(feature, latlng, attributes){
     //create circle marker layer
     var layer = L.circleMarker(latlng, options);
 
-    //build popup content string
-    var popupContent = "<p><b>Country:</b> " + feature.properties.Country + "</p>";
-    
-    //add formatted attribute to popup content string
-    var year = attribute.split("_")[1];
-    popupContent += "<p><b>Seats in " + year + ":</b> " + feature.properties[attribute] + "</p>";
-    
-    //bind the popup to the circle marker
-    layer.bindPopup(popupContent, {
-        offset: new L.Point(0,-options.radius) 
-    });
+    var popupContent = createPopupContent(feature.properties, attribute);
+    //bind the popup to the circle marker    
+    layer.bindPopup(popupContent, {  offset: new L.Point(0,-options.radius)    });
 
     //return the circle marker to the L.geoJson pointToLayer option
     return layer;
@@ -111,47 +91,74 @@ function createPropSymbols(data, attributes){
 
 //Resize proportional symbols according to new attribute values
 function updatePropSymbols(attribute){
+    var year = attribute.split("")[1];
+    //update temporal legend
+    document.querySelector("span.year").innerHTML = year;
+
     map.eachLayer(function(layer){
         if (layer.feature){
-              //access feature properties
-              var props = layer.feature.properties;
+            var props = layer.feature.properties;
 
-              //update each feature's radius based on new attribute values
-              var radius = calcPropRadius(props[attribute]);
-              layer.setRadius(radius);
-  
-              //add country to popup content string
-              var popupContent = "<p><b>Country:</b> " + props.Country + "</p>";
-  
-              //add formatted attribute to panel content string
-              var year = attribute.split("_")[1];
-              popupContent += "<p><b>Seats in " + year + ":</b> " + props[attribute] + "</p>";
-  
-              //update popup content            
-              popup = layer.getPopup();            
-              popup.setContent(popupContent).update();
+            //update each feature's radius based on new attribute values
+            var radius = calcPropRadius(props[attribute]);
+            layer.setRadius(radius);
+ 
+            //add city to popup content string
+            var popupContent = "<p><b>Country:</b> " + props.Country + "</p>";
+ 
+            //add formatted attribute to panel content string
+            var year = attribute.split("_")[1];
+            popupContent += "<p><b>Seats in " + year + ":</b> " + props[attribute] + " </p>";
+ 
+            //update popup with new content
+            popup = layer.getPopup();
+            popup.setContent(popupContent).update();
         };
     });
 };
 
+function createPopupContent(properties, attribute){
+    //add city to popup content string
+    var popupContent = "<p><b>Country:</b> " + properties.Country + "</p>";
+
+    //add formatted attribute to panel content string
+    var year = attribute.split("_")[1];
+    popupContent += "<p><b>Seats in " + year + ":</b> " + properties[attribute] + "</p>";
+
+    return popupContent;
+};
+
 //Create new sequence controls
 function createSequenceControls(attributes){
-    //create range input element (slider)
-    var slider = "<input class='range-slider' type='range'></input>";
-    document.querySelector('#panel').insertAdjacentHTML('beforeend','<button class="step" id="reverse"/button>');
-    document.querySelector("#panel").insertAdjacentHTML('beforeend',slider);
+    var SequenceControl = L.Control.extend({
+        options: {
+            position: 'bottomleft'
+        },
+
+        onAdd: function (){
+            // create the control container div with a particular class name
+            var container = L.DomUtil.create('div', 'sequence-control-container');
+            // create range input element (slider)
+            container.insertAdjacentHTML('beforeend', '<input class="range-slider" type="range">')
+            // add skip buttons
+            container.insertAdjacentHTML('beforeend', '<button class="step" id="reverse" title="Reverse"><img src="img/backward.png"></button>');
+            container.insertAdjacentHTML('beforeend', '<button class="step" id="forward" title="Forward"><img src="img/forward.png"></button>');
+            //disable any mouse event listeners for the container
+            L.DomEvent.disableClickPropagation(container);
+            return container;
+        },
+    });
+
+    map.addControl(new SequenceControl());
     //set slider attributes
     document.querySelector(".range-slider").max = 6;
     document.querySelector(".range-slider").min = 0;
     document.querySelector(".range-slider").value = 0;
     document.querySelector(".range-slider").step = 1;
-    //add step buttons
-    document.querySelector('#panel').insertAdjacentHTML('beforeend','<button class="step" id="forward"/button>');
-    //replace button content with images
-    document.querySelector('#reverse').insertAdjacentHTML('beforeend',"<img src='img/backward.png'>")
-    document.querySelector('#forward').insertAdjacentHTML('beforeend',"<img src='img/forward.png'>")
-    //click listener for buttons
-    document.querySelectorAll('.step').forEach(function(step){
+
+    var steps = document.querySelectorAll('.step');
+
+    steps.forEach(function(step){
         step.addEventListener("click", function(){
             var index = document.querySelector('.range-slider').value;
 
@@ -180,6 +187,26 @@ function createSequenceControls(attributes){
         //pass new attribute to update symbols
         updatePropSymbols(attributes[index]);
     });
+};
+
+function createLegend(attributes){
+    var LegendControl = L.Control.extend({
+        options: {
+            position: 'bottomright'
+        },
+
+        onAdd: function () {
+            // create the control container with a particular class name
+            var container = L.DomUtil.create('div', 'legend-control-container');
+
+            //PUT YOUR SCRIPT TO CREATE THE TEMPORAL LEGEND HERE
+            container.insertAdjacentHTML('beforeend', '<p class="temporalLegend">Seats in <span class="year">1986</span></p>');
+
+            return container;
+        }
+    });
+
+    map.addControl(new LegendControl());
 };
 
 //build an attributes array from the data
@@ -218,6 +245,7 @@ function getData(map){
             minValue = calculateMinValue(json);
             createPropSymbols(json, attributes);
             createSequenceControls(attributes);
+            createLegend(attributes);
         });
 };
 
