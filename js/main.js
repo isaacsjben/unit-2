@@ -38,7 +38,7 @@ function calcStats(data){
     dataStats.max = Math.max(...allValues);
     //calculate meanValue
     var sum = allValues.reduce(function(a, b){return a+b;});
-    dataStats.mean = sum/ allValues.length;
+    dataStats.mean = 32;
 }
 
 //calculate the radius of each proportional symbol
@@ -216,9 +216,13 @@ function createLegend(attributes){
                 //Step 3: assign the r and cy attributes  
                 var radius = calcPropRadius(dataStats[circles[i]]);  
                 var cy = 60 - radius;  
-
-                svg += '<circle class="legend-circle" id="' + circles[i] + '" r="' + radius + '"cy="' + cy + '" fill="#F47821" fill-opacity="0.8" stroke="#000000" cx="35"/>';  
                 //circle string
+                svg += '<circle class="legend-circle" id="' + circles[i] + '" r="' + radius + '"cy="' + cy + '" fill="#F47821" fill-opacity="0.8" stroke="#000000" cx="35"/>';  
+                //evenly space out labels            
+                var textY = i * 20 + 20;            
+                //text string            
+                svg += '<text id="' + circles[i] + '-text" x="75" y="' + textY + '">' + Math.round(dataStats[circles[i]]*100)/100 + " seats" + '</text>';
+        
             };
 
             //close svg string

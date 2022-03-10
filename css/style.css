@@ -25,6 +25,11 @@ h4 {
     text-align: center;
 }
 
+img {
+    padding-left: 375px;
+    padding-right: 375px;
+}
+
 p {
     font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
     font-weight:lighter;
@@ -93,7 +98,8 @@ p {
     .legend-control-container {
         width: 150px;
         /*height: 200px;*/
-        font-weight: bold;
+        font-weight:500;
+        font-size:small;
         background-color: rgba(255,255,255,0.8);
         padding: 10px;
         text-align: center;
@@ -101,8 +107,10 @@ p {
     }
     
     .legend-control-container p{
-         margin: 0;
+        margin: 0;
+        font-weight:bolder;
     }
+
     .btn-primary {
         background-color: rgba(255,255,255,0.8);
         border-style: solid;
