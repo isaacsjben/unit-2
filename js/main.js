@@ -1,4 +1,5 @@
 var map;
+var dataStats = {};
 
 function createMap(){
     map = L.map('map').setView([53, 5], 4);
@@ -15,7 +16,7 @@ L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/toner-lite/{z}/{x}/{y}{r}
 getData(map)
 };
 
-function calculateMinValue(data){
+function calcStats(data){
     //create empty array to store all data values
     var allValues = [];
     //loop through each city
@@ -32,10 +33,12 @@ function calculateMinValue(data){
             }
         }
     }
-    //get minimum value of our array
-    var minValue = Math.min(...allValues)
-
-    return minValue;
+    //get min, max, mean stats for our array
+    dataStats.min = Math.min(...allValues);
+    dataStats.max = Math.max(...allValues);
+    //calculate meanValue
+    var sum = allValues.reduce(function(a, b){return a+b;});
+    dataStats.mean = sum/ allValues.length;
 }
 
 //calculate the radius of each proportional symbol
@@ -43,7 +46,7 @@ function calcPropRadius(attValue) {
     //constant factor adjusts symbol sizes evenly
     var minRadius = 5;
     //Flannery Apperance Compensation formula
-    var radius = 1.0083 * Math.pow(attValue/minValue,0.5715) * minRadius
+    var radius = 1.0083 * Math.pow(attValue/dataStats.min,0.5715) * minRadius
 
     return radius;
 };
@@ -91,7 +94,7 @@ function createPropSymbols(data, attributes){
 
 //Resize proportional symbols according to new attribute values
 function updatePropSymbols(attribute){
-    var year = attribute.split("")[1];
+    var year = attribute.split("_")[1];
     //update temporal legend
     document.querySelector("span.year").innerHTML = year;
 
@@ -200,7 +203,29 @@ function createLegend(attributes){
             var container = L.DomUtil.create('div', 'legend-control-container');
 
             //PUT YOUR SCRIPT TO CREATE THE TEMPORAL LEGEND HERE
-            container.insertAdjacentHTML('beforeend', '<p class="temporalLegend">Seats in <span class="year">1986</span></p>');
+            container.innerHTML = '<p class="temporalLegend">Seats in <span class="year">1986</span></p>';
+
+            //Step 1: start attribute legend svg string
+            var svg = '<svg id="attribute-legend" width="160px" height="60px">';
+
+            //array of circle names to base loop on
+            var circles = ["max", "mean", "min"];
+
+            //Step 2: loop to add each circle and text to svg string
+            for (var i=0; i<circles.length; i++){
+                //Step 3: assign the r and cy attributes  
+                var radius = calcPropRadius(dataStats[circles[i]]);  
+                var cy = 60 - radius;  
+
+                svg += '<circle class="legend-circle" id="' + circles[i] + '" r="' + radius + '"cy="' + cy + '" fill="#F47821" fill-opacity="0.8" stroke="#000000" cx="35"/>';  
+                //circle string
+            };
+
+            //close svg string
+            svg += "</svg>";
+
+            //add attribute legend svg to container
+            container.insertAdjacentHTML('beforeend',svg);
 
             return container;
         }
@@ -241,8 +266,8 @@ function getData(map){
         .then(function(json){          
             //create an attributes array
             var attributes = processData(json);  
-            //calculate minimum data value
-            minValue = calculateMinValue(json);
+            //calling our renamed function  
+            calcStats(json);  
             createPropSymbols(json, attributes);
             createSequenceControls(attributes);
             createLegend(attributes);
